@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>gym-ai</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark">🏋️</span>
+        <div>
+          <h1>gym-ai</h1>
+          <p>Tu entrenador personal · todo se guarda solo en este navegador</p>
+        </div>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Secciones">
+        <button class="tab-btn is-active" data-tab="chat" role="tab" aria-selected="true">
+          <span class="tab-icon">💬</span> Chat
+        </button>
+        <button class="tab-btn" data-tab="routine" role="tab" aria-selected="false">
+          <span class="tab-icon">📋</span> Mi rutina
+          <span id="routine-badge" class="tab-badge hidden"></span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="view" id="view-chat">
+      <section class="chat-panel">
+        <div id="messages" class="messages"></div>
+
+        <div id="image-preview-wrap" class="image-preview-wrap hidden">
+          <img id="image-preview" alt="Foto adjunta" />
+          <button id="remove-image" type="button" title="Quitar foto">✕</button>
+        </div>
+
+        <form id="chat-form" class="chat-form">
+          <label class="attach-btn" title="Adjuntar foto de máquinas/gimnasio">
+            📷
+            <input id="image-input" type="file" accept="image/*" hidden />
+          </label>
+          <textarea
+            id="text-input"
+            rows="1"
+            placeholder="Pide una rutina, adapta la que tienes, o cambia un ejercicio..."
+          ></textarea>
+          <button type="submit" id="send-btn" class="btn-primary">Enviar</button>
+        </form>
+      </section>
+    </main>
+
+    <main class="view hidden" id="view-routine">
+      <section class="routine-section">
+        <div class="section-header">
+          <h2>Rutina actual</h2>
+          <button id="save-routine-btn" class="btn-primary" disabled>Guardar rutina</button>
+        </div>
+        <div id="current-routine" class="routine-view">
+          <div class="empty-state">
+            <span class="empty-icon">🗓️</span>
+            <p>Aún no hay ninguna rutina.</p>
+            <p class="empty-hint">Ve a la pestaña Chat y pide una.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="routine-section">
+        <div class="section-header">
+          <h2>Rutinas guardadas</h2>
+        </div>
+        <div id="saved-routines" class="saved-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
