@@ -25,6 +25,13 @@ npm start
 
 Abre http://localhost:3000
 
+### IA gratuita (Gemini)
+
+En vez de la API de pago de Anthropic puedes usar la capa gratuita de Google
+Gemini: crea una key gratis (sin tarjeta) en https://aistudio.google.com/apikey
+y ponla en `.env` como `GEMINI_API_KEY`. Si está definida, el servidor usa
+Gemini (`GEMINI_MODEL`, por defecto `gemini-2.5-flash`); si no, usa Claude.
+
 ## Estructura
 
 - `server/` — Express: sirve el frontend, las imágenes del dataset, y el

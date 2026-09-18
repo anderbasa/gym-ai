@@ -1,7 +1,11 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const { searchExercises, sanitizeRoutine } = require('./exercises');
 
-const client = new Anthropic(); // lee ANTHROPIC_API_KEY del entorno
+let client;
+function getClient() {
+  if (!client) client = new Anthropic(); // lee ANTHROPIC_API_KEY del entorno
+  return client;
+}
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-4-8';
 const MAX_TOKENS = 8192;
 const MAX_ITERATIONS = 6;
@@ -195,7 +199,7 @@ async function runConversation(rawMessages, currentRoutine) {
   let structuredRoutine = null;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const response = await client.messages.create({
+    const response = await getClient().messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: buildSystemBlocks(currentRoutine),
@@ -262,4 +266,12 @@ async function runConversation(rawMessages, currentRoutine) {
   };
 }
 
-module.exports = { runConversation };
+module.exports = {
+  runConversation,
+  SYSTEM_PROMPT,
+  searchExercisesTool,
+  presentRoutineTool,
+  isRoutineComplete,
+  trimHistory,
+  MAX_ITERATIONS,
+};

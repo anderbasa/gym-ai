@@ -1,5 +1,7 @@
 const express = require('express');
-const { runConversation } = require('../lib/anthropic');
+const { runConversation } = process.env.GEMINI_API_KEY
+  ? require('../lib/gemini')
+  : require('../lib/anthropic');
 
 const router = express.Router();
 
