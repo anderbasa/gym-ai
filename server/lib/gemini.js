@@ -5,11 +5,19 @@ const {
   presentRoutineTool,
   isRoutineComplete,
   trimHistory,
-  MAX_ITERATIONS,
 } = require('./anthropic');
 
+const MAX_ITERATIONS = 10;
+const PARALLEL_SEARCH_HINT =
+  'EFICIENCIA: para una rutina, llama a "search_exercises" varias veces EN PARALELO en un mismo turno (una por ejercicio o grupo muscular) en vez de una tras otra, y llama a "present_routine" en cuanto tengas resultados suficientes. Tienes un máximo de pasos limitado.';
+
 const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
+const RETRY_DELAYS_MS = [2000, 5000];
+
+const endpointFor = (model) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Gemini acepta un subconjunto de JSON Schema: no admite additionalProperties.
 function toGeminiSchema(schema) {
@@ -52,8 +60,9 @@ function toGeminiContents(messages) {
 }
 
 function buildSystemText(currentRoutine) {
-  if (!currentRoutine) return SYSTEM_PROMPT;
-  return `${SYSTEM_PROMPT}\n\nContexto: última rutina estructurada acordada con el usuario (JSON). Si piden un cambio puntual, parte de aquí:\n\n${JSON.stringify(
+  const base = `${SYSTEM_PROMPT}\n\n${PARALLEL_SEARCH_HINT}`;
+  if (!currentRoutine) return base;
+  return `${base}\n\nContexto: última rutina estructurada acordada con el usuario (JSON). Si piden un cambio puntual, parte de aquí:\n\n${JSON.stringify(
     currentRoutine
   )}`;
 }
@@ -62,17 +71,29 @@ async function callGemini(body) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('Falta GEMINI_API_KEY en el archivo .env');
 
-  const res = await fetch(ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
+  const attempts = [
+    { model: MODEL, wait: 0 },
+    ...RETRY_DELAYS_MS.map((wait) => ({ model: MODEL, wait })),
+    { model: FALLBACK_MODEL, wait: 0 },
+  ];
+
+  for (const { model, wait } of attempts) {
+    if (wait) await sleep(wait);
+    const res = await fetch(endpointFor(model), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) return data;
+
     const detail = (data.error && data.error.message) || `HTTP ${res.status}`;
-    throw new Error(`Gemini: ${detail}`);
+    if (res.status !== 503 && res.status !== 429) throw new Error(`Gemini: ${detail}`);
+    console.warn(`[gemini] ${model} -> ${res.status}: ${detail.slice(0, 120)}`);
   }
-  return data;
+  throw new Error(
+    'Gemini está saturado o has llegado al límite gratuito. Espera unos segundos y vuelve a intentarlo.'
+  );
 }
 
 async function runConversation(rawMessages, currentRoutine) {
