@@ -8,7 +8,7 @@ const {
   MAX_ITERATIONS,
 } = require('./anthropic');
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // Gemini acepta un subconjunto de JSON Schema: no admite additionalProperties.
@@ -138,7 +138,9 @@ async function runConversation(rawMessages, currentRoutine) {
   }
 
   return {
-    text: 'No he podido completar la respuesta tras varios intentos. ¿Puedes reformular tu petición?',
+    text: structuredRoutine
+      ? 'Aquí tienes la rutina. Dime si quieres cambiar algún ejercicio.'
+      : 'No he podido completar la respuesta tras varios intentos. ¿Puedes reformular tu petición?',
     routine: structuredRoutine,
   };
 }
